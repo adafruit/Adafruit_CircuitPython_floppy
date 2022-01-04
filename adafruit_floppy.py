@@ -1,13 +1,26 @@
-import time
+# SPDX-FileCopyrightText: 2022 Jeff Epler for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
+"""
+adafruit_floppy
+===============
+
+Interface with old floppy drives.
+
+
+* Author(s): Jeff Epler
+"""
+
 from digitalio import DigitalInOut, Pull
 from micropython import const
 from adafruit_ticks import ticks_ms, ticks_add, ticks_less
 
-motor_delay_ms = 1000
-step_delay_ms = 100
+_MOTOR_DELAY_MS = 1000
+_STEP_DELAY_MS = 100
 
-STEP_IN = const(0)
-STEP_OUT = const(1)
+_STEP_IN = const(0)
+_STEP_OUT = const(1)
 
 try:
     import typing
@@ -16,22 +29,24 @@ except ImportError:
     pass
 
 
-def OptionalDigitalInOut(
-    maybe_pin: Optional[microcontroller.Pin],
+def _optionaldigitalinout(
+    maybe_pin: typing.Optional[microcontroller.Pin],
 ) -> typing.Optional[DigitalInOut]:
     return None if maybe_pin is None else DigitalInOut(maybe_pin)
 
 
-def sleep_deadline_ms(deadline):
+def _sleep_deadline_ms(deadline):
     while ticks_less(ticks_ms(), deadline):
         pass
 
 
-def sleep_ms(interval):
-    sleep_deadline_ms(ticks_add(ticks_ms(), interval))
+def _sleep_ms(interval):
+    _sleep_deadline_ms(ticks_add(ticks_ms(), interval))
 
 
-class Floppy:
+class Floppy:  # pylint: disable=too-many-instance-attributes
+    """Interface with floppy disk drive hardware"""
+
     _track: typing.Optional[int]
 
     def __init__(
@@ -63,8 +78,8 @@ class Floppy:
         self._direction.switch_to_output()
         self._step = DigitalInOut(steppin)
         self._step.switch_to_output()
-        self._wrdata = OptionalDigitalInOut(wrdatapin)
-        self._wrgate = OptionalDigitalInOut(wrgatepin)
+        self._wrdata = _optionaldigitalinout(wrdatapin)
+        self._wrgate = _optionaldigitalinout(wrgatepin)
         self._track0 = DigitalInOut(track0pin)
         self._track0.pull = Pull.UP
         self._protect = DigitalInOut(protectpin)
@@ -79,20 +94,27 @@ class Floppy:
 
     def _do_step(self, direction, count):
         self._direction.value = direction
-        for i in range(count):
-            sleep_ms(step_delay_ms)
+        for _ in range(count):
+            _sleep_ms(_STEP_DELAY_MS)
             self._step.value = True
-            sleep_ms(step_delay_ms)
+            _sleep_ms(_STEP_DELAY_MS)
             self._step.value = False
 
     def find_track0(self):
-        for i in range(250):
+        """Move the head out until the 'track0' signal becomes False
+
+        If successful, sets the internal track number to 0.
+
+        If unsuccsessful, sets the internatl track number to None and raises an exception."""
+        self._track = None
+        for _ in range(250):
             if not self._track0.value:
                 self._track = 0
                 break
-            self._do_step(STEP_OUT, 1)
+            self._do_step(_STEP_OUT, 1)
+        raise RuntimeError("Could not reach track 0")
 
-    def _check_inpos(self)->None:
+    def _check_inpos(self) -> None:
         track = self._track
         drive_says_track0 = not self._track0.value
         we_think_track0 = track == 0
@@ -101,6 +123,7 @@ class Floppy:
 
     @property
     def track(self) -> typing.Optional[int]:
+        """The current track number, or None if the track number is unknown."""
         self._check_inpos()
         return self._track
 
@@ -114,15 +137,16 @@ class Floppy:
 
         delta = track - self.track
         if delta < 0:
-            self._do_step(STEP_OUT, -delta)
+            self._do_step(_STEP_OUT, -delta)
         else:
-            self._do_step(STEP_IN, delta)
+            self._do_step(_STEP_IN, delta)
 
         self._track = track
         self._check_inpos()
 
     @property
     def spin(self) -> bool:
+        """True spins the floppy, False stops it"""
         return not self._motor.value
 
     @spin.setter
@@ -132,7 +156,7 @@ class Floppy:
 
         self._motor.value = not motor_on
         if motor_on:
-            sleep_ms(motor_delay_ms)
+            _sleep_ms(_MOTOR_DELAY_MS)
             deadline = ticks_add(ticks_ms(), 10_000)
 
             while ticks_less(ticks_ms(), deadline):
@@ -143,6 +167,9 @@ class Floppy:
 
     @property
     def selected(self) -> bool:
+        """Select this drive.
+
+        Set this property to True before doing anything with the drive."""
         return not self._select.value
 
     @selected.setter
@@ -150,9 +177,10 @@ class Floppy:
         self._select.value = not select
 
     @property
-    def side(self) -> bool:
-        return not self._side.value
+    def side(self) -> int:
+        """The side (0/1) for read/write operations"""
+        return int(not self._side.value)
 
     @side.setter
-    def side(self, head: bool) -> None:
-        self._side = not head
+    def side(self, head: int) -> None:
+        self._side = head == 0
