@@ -71,7 +71,7 @@ See the `Examples page <examples.html>`_ for a full example.  This example shows
     import board
     import adafruit_floppy
 
-    floppy = adafruit_floppy.Floppy(...)
+    floppy = adafruit_floppy.MFMFloppy(...)
 
     floppy.selected = True
     floppy.spin = True
