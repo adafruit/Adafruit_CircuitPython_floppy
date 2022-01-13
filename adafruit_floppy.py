@@ -12,6 +12,7 @@ Interface with old floppy drives.
 * Author(s): Jeff Epler
 """
 
+import floppyio
 from digitalio import DigitalInOut, Pull
 from micropython import const
 from adafruit_ticks import ticks_ms, ticks_add, ticks_less
@@ -44,7 +45,7 @@ def _sleep_ms(interval):
     _sleep_deadline_ms(ticks_add(ticks_ms(), interval))
 
 
-class Floppy:  # pylint: disable=too-many-instance-attributes
+class MFMFloppy:  # pylint: disable=too-many-instance-attributes
     """Interface with floppy disk drive hardware"""
 
     _track: typing.Optional[int]
@@ -85,8 +86,9 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
         self._protect = DigitalInOut(protectpin)
         self._protect.pull = Pull.UP
         self._rddata = DigitalInOut(rddatapin)
+        self._rddata.pull = Pull.UP
         self._side = DigitalInOut(sidepin)
-        self._side.switch_to_output()
+        self._side.switch_to_output(True)
         self._ready = DigitalInOut(readypin)
         self._ready.pull = Pull.UP
 
@@ -107,10 +109,14 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
 
         If unsuccsessful, sets the internatl track number to None and raises an exception."""
         self._track = None
+        # First move off of track0. One of my drives would not function properly
+        # without this initial move-off.
+        for _ in range(4):
+            self._do_step(_STEP_IN, 1)
         for _ in range(250):
             if not self._track0.value:
                 self._track = 0
-                break
+                return
             self._do_step(_STEP_OUT, 1)
         raise RuntimeError("Could not reach track 0")
 
@@ -183,4 +189,90 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
 
     @side.setter
     def side(self, head: int) -> None:
-        self._side = head == 0
+        self._side.value = head == 0
+
+
+class FloppyBlockDevice:
+    """Wrap an MFMFloppy object into a block device suitable for `storage.VfsFat`
+
+    The default heads/sectors/tracks setting are for 3.5", 1.44MB floppies.
+
+    In the current implementation, the floppy is read-only.
+
+    A cache is used for track 0 on cylinder 0 and for the last track accessed.
+
+    Example::
+
+        import storage
+        import adafruit_floppy
+
+        floppy = adafruit_floppy.MFMFloppy(...)
+        block_device = adafruit_floppy.FloppyBlockDevice(floppy)
+        vfs = storage.VfsFat(f)
+        storage.mount(vfs, '/floppy')
+        print(os.listdir("/floppy"))
+    """
+
+    def __init__(self, floppy, heads=2, sectors=18, tracks=80):
+        self.floppy = floppy
+        self.heads = heads
+        self.sectors = sectors
+        self.tracks = tracks
+        self.track0side0_cache = memoryview(bytearray(sectors * 512))
+
+        self.floppy.track = 0
+        self.floppy.head = 0
+        floppyio.mfm_readinto(self.track0side0_cache, floppy._rddata, floppy._index)
+
+        self.track_cache = memoryview(bytearray(sectors * 512))
+        self.cached_track = -1
+        self.cached_side = -1
+
+    def deinit(self):
+        """Deinitialize this object (does nothing)"""
+
+    def sync(self):
+        """Write out any pending data to disk (does nothing)"""
+
+    def writeblocks(self, start, buf):  # pylint: disable=no-self-use
+        """Write to the floppy (always raises an exception)"""
+        raise IOError("Read-only filesystem")
+
+    def count(self):
+        """Return the floppy capacity in 512-byte units"""
+        return self.heads * self.sectors * self.tracks
+
+    def readblocks(self, start_block, buf):
+        """Read a number of blocks from the flopppy"""
+        buf = memoryview(buf).cast("B")
+        for i in range(0, len(buf) // 512):
+            self._readblock(start_block + i, buf[i * 512 : (i + 1) * 512])
+
+    def _readblock(self, block, buf):
+        if block > self.count():
+            raise IOError("Read past end of media")
+        track = block // (self.heads * self.sectors)
+        block %= self.heads * self.sectors
+        side = block // (self.sectors)
+        block %= self.sectors
+        trackdata = self._get_track_data(track, side)
+        buf[:] = trackdata[block * 512 : (block + 1) * 512]
+
+    def _get_track_data(self, track, side):
+        if track == 0 and side == 0:
+            return self.track0side0_cache
+        if track != self.cached_track or side != self.cached_side:
+            self.floppy.selected = True
+            self.floppy.spin = True
+            self.floppy.track = track
+            self.floppy.side = side
+            floppyio.mfm_readinto(
+                self.track_cache,
+                self.floppy._rddata,  # pylint: disable=protected-access
+                self.floppy._index,  # pylint: disable=protected-access
+            )
+            self.floppy.spin = False
+            self.floppy.selected = False
+            self.cached_track = track
+            self.cached_side = side
+        return self.track_cache
