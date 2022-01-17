@@ -26,6 +26,7 @@ _STEP_OUT = const(1)
 try:
     import typing
     import microcontroller
+    import circuitpython_typing
 except ImportError:
     pass
 
@@ -191,6 +192,37 @@ class MFMFloppy:  # pylint: disable=too-many-instance-attributes
     def side(self, head: int) -> None:
         self._side.value = head == 0
 
+    def flux_readinto(self, buf: circuitpython_typing.WritableBuffer) -> int:
+        """Read flux transition information into the buffer.
+
+        The function returns when the buffer has filled, or when the index input
+        indicates that one full revolution of data has been recorded.  Due to
+        technical limitations, this process may not be interruptible by
+        KeyboardInterrupt.
+
+        :param buf: Read data into this buffer.
+            Each element represents the time between successive zero-to-one transitions.
+        :return: The actual number of bytes of read"""
+        return floppyio.flux_readinto(buf, self._rddata, self._index)
+
+    def mfm_readinto(self, buf: circuitpython_typing.WriteableBuffer) -> int:
+        """Read mfm blocks into the buffer.
+
+        The track is assumed to consist of 512-byte sectors.
+
+        The function returns when all sectors have been successfully read, or
+        a number of index pulses have occurred.  Due to technical limitations, this
+        process may not be interruptible by KeyboardInterrupt.
+
+        :param buf: Read data into this buffer.  Must be a multiple of 512.
+        :return: The actual number of sectors read
+        """
+        return floppyio.mfm_readinto(
+            buf,
+            self._rddata,
+            self._index,
+        )
+
 
 class FloppyBlockDevice:
     """Wrap an MFMFloppy object into a block device suitable for `storage.VfsFat`
@@ -266,10 +298,8 @@ class FloppyBlockDevice:
             self.floppy.spin = True
             self.floppy.track = track
             self.floppy.side = side
-            floppyio.mfm_readinto(
+            self.floppy.mfm_readinto(
                 self.track_cache,
-                self.floppy._rddata,  # pylint: disable=protected-access
-                self.floppy._index,  # pylint: disable=protected-access
             )
             self.floppy.spin = False
             self.floppy.selected = False
