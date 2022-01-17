@@ -18,7 +18,7 @@ from micropython import const
 from adafruit_ticks import ticks_ms, ticks_add, ticks_less
 
 _MOTOR_DELAY_MS = 1000
-_STEP_DELAY_MS = 100
+_STEP_DELAY_MS = 10
 
 _STEP_IN = const(0)
 _STEP_OUT = const(1)
