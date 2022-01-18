@@ -26,7 +26,7 @@ _STEP_OUT = const(1)
 try:
     import typing
     import microcontroller
-    import circuitpython_typing
+    import circuitpython_typing  # pylint: disable=unused-import
 except ImportError:
     pass
 
@@ -192,7 +192,7 @@ class MFMFloppy:  # pylint: disable=too-many-instance-attributes
     def side(self, head: int) -> None:
         self._side.value = head == 0
 
-    def flux_readinto(self, buf: circuitpython_typing.WritableBuffer) -> int:
+    def flux_readinto(self, buf: "circuitpython_typing.WritableBuffer") -> int:
         """Read flux transition information into the buffer.
 
         The function returns when the buffer has filled, or when the index input
@@ -205,7 +205,7 @@ class MFMFloppy:  # pylint: disable=too-many-instance-attributes
         :return: The actual number of bytes of read"""
         return floppyio.flux_readinto(buf, self._rddata, self._index)
 
-    def mfm_readinto(self, buf: circuitpython_typing.WriteableBuffer) -> int:
+    def mfm_readinto(self, buf: "circuitpython_typing.WriteableBuffer") -> int:
         """Read mfm blocks into the buffer.
 
         The track is assumed to consist of 512-byte sectors.
