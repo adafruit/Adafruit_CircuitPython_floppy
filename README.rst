@@ -2,8 +2,8 @@ Introduction
 ============
 
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-floppy/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/floppy/en/latest/
+.. image:: https://readthedocs.org/projects/adafruitcircuitpythonfloppy/badge/?version=latest
+    :target: https://docs.circuitpython.org/projects/floppy/en/latest/
     :alt: Documentation Status
 
 
