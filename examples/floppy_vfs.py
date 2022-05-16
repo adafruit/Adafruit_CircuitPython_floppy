@@ -7,16 +7,9 @@
 # print the root directory listing of a 1.44MB floppy
 
 import os
-import sys
-import time
-
-import supervisor
 import storage
 import board
-import digitalio
-import floppyio
 import adafruit_datetime as datetime
-
 import adafruit_floppy
 
 D24 = getattr(board, "D24") or getattr(board, "A4")
