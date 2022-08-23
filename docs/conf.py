@@ -47,8 +47,14 @@ master_doc = "index"
 
 # General information about the project.
 project = "Adafruit CircuitPython floppy Library"
+creation_year = "2022"
 current_year = str(datetime.datetime.now().year)
-copyright = current_year + " Jeff Epler"
+year_duration = (
+    current_year
+    if current_year == creation_year
+    else creation_year + " - " + current_year
+)
+copyright = year_duration + " Jeff Epler"
 author = "Jeff Epler"
 
 # The version info for the project you're documenting, acts as replacement for
