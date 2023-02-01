@@ -31,6 +31,10 @@ except ImportError:
     pass
 
 
+__version__ = "0.0.0+auto.0"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_floppy.git"
+
+
 def _optionaldigitalinout(
     maybe_pin: typing.Optional[microcontroller.Pin],
 ) -> typing.Optional[DigitalInOut]:
