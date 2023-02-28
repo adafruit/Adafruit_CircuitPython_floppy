@@ -41,7 +41,7 @@ for b in buf:
     buckets[b] += 1
 oi = -1
 for i, bi in enumerate(buckets):
-    if bi > 0:
+    if bi > 10:
         if i != oi + 1:
             print("---")
         oi = i
