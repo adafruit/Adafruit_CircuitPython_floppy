@@ -13,14 +13,14 @@ D24 = getattr(board, "D24") or getattr(board, "A4")
 D25 = getattr(board, "D25") or getattr(board, "A5")
 
 floppy = adafruit_floppy.MFMFloppy(
-    densitypin=board.A0,
-    indexpin=board.A1,
-    selectpin=board.A2,
-    motorpin=board.A3,
-    directionpin=D24,
-    steppin=D25,
-    track0pin=board.D11,
-    protectpin=board.D10,
+    densitypin=board.A1,
+    indexpin=D25,
+    selectpin=board.A0,
+    motorpin=board.A2,
+    directionpin=board.A3,
+    steppin=D24,
+    track0pin=board.D10,
+    protectpin=board.D11,
     rddatapin=board.D9,
     sidepin=board.D6,
     readypin=board.D5,
@@ -41,7 +41,7 @@ for b in buf:
     buckets[b] += 1
 oi = -1
 for i, bi in enumerate(buckets):
-    if bi > 0:
+    if bi > 10:
         if i != oi + 1:
             print("---")
         oi = i
