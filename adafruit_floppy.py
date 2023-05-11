@@ -112,7 +112,8 @@ class MFMFloppy:  # pylint: disable=too-many-instance-attributes
 
         If successful, sets the internal track number to 0.
 
-        If unsuccsessful, sets the internatl track number to None and raises an exception."""
+        If unsuccsessful, sets the internatl track number to None and raises an exception.
+        """
         self._track = None
         # First move off of track0. One of my drives would not function properly
         # without this initial move-off.
