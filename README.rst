@@ -53,7 +53,7 @@ following command to install:
 
 .. code-block:: shell
 
-    circup install floppy
+    circup install adafruit_floppy
 
 Or the following command to update an existing version:
 
