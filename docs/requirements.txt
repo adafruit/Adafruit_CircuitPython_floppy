@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-sphinx>=4.0.0
+sphinx
 sphinxcontrib-jquery
+sphinx-rtd-theme
 adafruit-circuitpython-ticks
