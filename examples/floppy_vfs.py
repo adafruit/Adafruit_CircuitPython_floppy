@@ -3,8 +3,12 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-# On an Adafruit Feather M4 or Adafruit Feather RP2040 with Floppy Featherwing,
-# print the root directory listing of a 1.44MB floppy
+# On an Adafruit Floppsy, Adafruit Feather M4 or Adafruit Feather RP2040 with
+# Floppy Featherwing, print the root directory listing of a 1.44MB floppy
+
+# Leave this line here, this memory must be allocated as early as possible to avoid
+# memory fragmentation
+flux_buffer = bytearray(110000)
 
 import os
 import storage
@@ -12,30 +16,52 @@ import board
 import adafruit_datetime as datetime
 import adafruit_floppy
 
-D24 = getattr(board, "D24") or getattr(board, "A4")
-D25 = getattr(board, "D25") or getattr(board, "A5")
-
 epoch = datetime.datetime(1970, 1, 1)
 
 ST_SIZE = 6
 ST_TIME = 7
 SV_BFREE = 3
 
-floppy = adafruit_floppy.MFMFloppy(
-    densitypin=board.A1,
-    indexpin=D25,
-    selectpin=board.A0,
-    motorpin=board.A2,
-    directionpin=board.A3,
-    steppin=D24,
-    track0pin=board.D10,
-    protectpin=board.D11,
-    rddatapin=board.D9,
-    sidepin=board.D6,
-    readypin=board.D5,
-)
+if hasattr(board, 'DENSITY'): # floppsy
+    floppy = adafruit_floppy.Floppy(
+        densitypin=board.DENSITY,
+        indexpin=board.INDEX,
+        selectpin=board.SELECT,
+        motorpin=board.MOTOR,
+        directionpin=board.DIRECTION,
+        steppin=board.STEP,
+        track0pin=board.TRACK0,
+        protectpin=board.WRPROT,
+        rddatapin=board.RDDATA,
+        sidepin=board.SIDE,
+        readypin=board.READY,
+        floppydirectionpin=board.FLOPPY_DIRECTION,
+    )
 
-f = adafruit_floppy.FloppyBlockDevice(floppy, sectors=18)
+else:
+    floppy = adafruit_floppy.Floppy(
+        densitypin=board.A1,
+        indexpin=D25,
+        selectpin=board.A0,
+        motorpin=board.A2,
+        directionpin=board.A3,
+        steppin=D24,
+        track0pin=board.D10,
+        protectpin=board.D11,
+        rddatapin=board.D9,
+        sidepin=board.D6,
+        readypin=board.D5,
+        flux_buffer=flux_buffer
+    )
+
+floppy.find_track0()
+print(sum(floppy._index.value for _ in range(100_000)))
+print(floppy.flux_readinto(flux_buffer))
+print(sum(flux_buffer))
+
+f = adafruit_floppy.FloppyBlockDevice(floppy, sectors=18,
+        flux_buffer=flux_buffer
+        )
 
 vfs = storage.VfsFat(f)
 storage.mount(vfs, "/floppy")
