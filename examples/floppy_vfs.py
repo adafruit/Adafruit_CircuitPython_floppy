@@ -10,6 +10,7 @@
 # memory fragmentation
 flux_buffer = bytearray(110000)
 
+# pylint: disable=wrong-import-position
 import os
 import storage
 import board
@@ -22,7 +23,7 @@ ST_SIZE = 6
 ST_TIME = 7
 SV_BFREE = 3
 
-if hasattr(board, 'DENSITY'): # floppsy
+if hasattr(board, "DENSITY"):  # floppsy
     floppy = adafruit_floppy.Floppy(
         densitypin=board.DENSITY,
         indexpin=board.INDEX,
@@ -39,6 +40,9 @@ if hasattr(board, 'DENSITY'): # floppsy
     )
 
 else:
+    D24 = getattr(board, "D24") or getattr(board, "A4")
+    D25 = getattr(board, "D25") or getattr(board, "A5")
+
     floppy = adafruit_floppy.Floppy(
         densitypin=board.A1,
         indexpin=D25,
@@ -51,17 +55,12 @@ else:
         rddatapin=board.D9,
         sidepin=board.D6,
         readypin=board.D5,
-        flux_buffer=flux_buffer
+        flux_buffer=flux_buffer,
     )
 
 floppy.find_track0()
-print(sum(floppy._index.value for _ in range(100_000)))
-print(floppy.flux_readinto(flux_buffer))
-print(sum(flux_buffer))
 
-f = adafruit_floppy.FloppyBlockDevice(floppy, sectors=18,
-        flux_buffer=flux_buffer
-        )
+f = adafruit_floppy.FloppyBlockDevice(floppy, sectors=18, flux_buffer=flux_buffer)
 
 vfs = storage.VfsFat(f)
 storage.mount(vfs, "/floppy")

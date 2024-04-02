@@ -137,7 +137,9 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
         drive_says_track0 = not self._track0.value
         we_think_track0 = track == 0
         if drive_says_track0 != we_think_track0:
-            raise RuntimeError(f"Drive lost position (target={track}, track0 sensor {drive_says_track0})")
+            raise RuntimeError(
+                f"Drive lost position (target={track}, track0 sensor {drive_says_track0})"
+            )
 
     @property
     def track(self) -> typing.Optional[int]:
@@ -217,7 +219,7 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
         return floppyio.flux_readinto(buf, self._rddata, self._index)
 
 
-class FloppyBlockDevice:
+class FloppyBlockDevice:  # pylint: disable=too-many-instance-attributes
     """Wrap an MFMFloppy object into a block device suitable for `storage.VfsFat`
 
     The default heads/sectors/tracks setting are for 3.5", 1.44MB floppies.
@@ -238,12 +240,20 @@ class FloppyBlockDevice:
         print(os.listdir("/floppy"))
     """
 
-    def __init__(self, floppy, heads=2, sectors=18, tracks=80, flux_buffer=None, t1_nom_ns: float=1000):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        floppy,
+        heads=2,
+        sectors=18,
+        tracks=80,
+        flux_buffer=None,
+        t1_nom_ns: float = 1000,
+    ):
         self.floppy = floppy
         self.heads = heads
         self.sectors = sectors
         self.tracks = tracks
-        self.flux_buffer = flux_buffer or buffer(sectors * 12 * 512)
+        self.flux_buffer = flux_buffer or bytearray(sectors * 12 * 512)
         self.track0side0_cache = memoryview(bytearray(sectors * 512))
         self.track0side0_validity = bytearray(sectors)
         self.track_cache = memoryview(bytearray(sectors * 512))
@@ -256,7 +266,6 @@ class FloppyBlockDevice:
 
         self.cached_track = -1
         self.cached_side = -1
-
 
     def deinit(self):
         """Deinitialize this object"""
@@ -316,5 +325,13 @@ class FloppyBlockDevice:
         for i in range(5):
             self.floppy.flux_readinto(self.flux_buffer)
             print("timing bins", self._t2_5_max, self._t3_5_max)
-            n = floppyio.mfm_readinto(track_data, self.flux_buffer, self._t2_5_max, self._t3_5_max, validity, i==0)
-            if n == self.sectors: break
+            n = floppyio.mfm_readinto(
+                track_data,
+                self.flux_buffer,
+                self._t2_5_max,
+                self._t3_5_max,
+                validity,
+                i == 0,
+            )
+            if n == self.sectors:
+                break
