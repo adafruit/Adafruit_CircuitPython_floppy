@@ -213,7 +213,7 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
     def side(self, head: int) -> None:
         self._side.value = head == 0
 
-    def flux_readinto(self, buf: "circuitpython_typing.WritableBuffer") -> int:
+    def flux_readinto(self, buf: "circuitpython_typing.WriteableBuffer") -> int:
         """Read flux transition information into the buffer.
 
         The function returns when the buffer has filled, or when the index input
@@ -258,7 +258,7 @@ class FloppyBlockDevice:  # pylint: disable=too-many-instance-attributes
         heads: int | None = None,
         sectors: int | None = None,
         tracks: int | None = None,
-        flux_buffer: circuitpython_typing.WritableBuffer | None = None,
+        flux_buffer: circuitpython_typing.WriteableBuffer | None = None,
         t1_nom_ns: float | None = None,
         keep_selected: bool = False,
     ):
