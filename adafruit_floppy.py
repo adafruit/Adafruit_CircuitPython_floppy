@@ -13,10 +13,11 @@ Interface with old floppy drives.
 """
 
 import struct
+
 import floppyio
+from adafruit_ticks import ticks_add, ticks_less, ticks_ms
 from digitalio import DigitalInOut, Pull
 from micropython import const
-from adafruit_ticks import ticks_ms, ticks_add, ticks_less
 
 _MOTOR_DELAY_MS = 1000
 _STEP_DELAY_MS = 10
@@ -26,8 +27,9 @@ _STEP_OUT = const(1)
 
 try:
     import typing
+
+    import circuitpython_typing
     import microcontroller
-    import circuitpython_typing  # pylint: disable=unused-import
 except ImportError:
     pass
 
@@ -51,12 +53,12 @@ def _sleep_ms(interval):
     _sleep_deadline_ms(ticks_add(ticks_ms(), interval))
 
 
-class Floppy:  # pylint: disable=too-many-instance-attributes
+class Floppy:
     """Interface with floppy disk drive hardware"""
 
     _track: typing.Optional[int]
 
-    def __init__(  # pylint: disable=too-many-locals
+    def __init__(
         self,
         *,
         densitypin: microcontroller.Pin,
@@ -227,7 +229,7 @@ class Floppy:  # pylint: disable=too-many-instance-attributes
         return floppyio.flux_readinto(buf, self._rddata, self._index)
 
 
-class FloppyBlockDevice:  # pylint: disable=too-many-instance-attributes
+class FloppyBlockDevice:
     """Wrap an MFMFloppy object into a block device suitable for `storage.VfsFat`
 
     The default is to autodetect the data rate and the geometry of an inserted
@@ -249,7 +251,7 @@ class FloppyBlockDevice:  # pylint: disable=too-many-instance-attributes
         print(os.listdir("/floppy"))
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         floppy,
         *,
@@ -331,7 +333,7 @@ class FloppyBlockDevice:  # pylint: disable=too-many-instance-attributes
     def sync(self):
         """Write out any pending data to disk (does nothing)"""
 
-    def writeblocks(self, start, buf):  # pylint: disable=no-self-use
+    def writeblocks(self, start, buf):
         """Write to the floppy (always raises an exception)"""
         raise OSError("Read-only filesystem")
 
@@ -434,9 +436,8 @@ class FloppyBlockDevice:  # pylint: disable=too-many-instance-attributes
             n_tracks = n_sectors_total // (n_heads * n_sectors_track)
             f_tracks = n_sectors_total % (n_heads * n_sectors_track)
             if f_tracks != 0:
-                # pylint: disable=line-too-long
                 print(
-                    f"Dubious geometry! {n_sectors_total=} {n_sectors_track=} {n_heads=} is {n_tracks=}+{f_tracks=}"
+                    f"Dubious geometry! {n_sectors_total=} {n_sectors_track=} {n_heads=} is {n_tracks=}+{f_tracks=}"  # noqa: E501
                 )
                 n_tracks += 1
 

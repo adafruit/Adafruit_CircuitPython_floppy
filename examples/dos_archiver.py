@@ -10,11 +10,13 @@ Insert a floppy and press Enter to archive it
 Do this for as many floppies as you like."""
 
 import os
-import sdcardio
+
+import adafruit_aw9523
 import board
+import sdcardio
 import storage
 import usb_cdc
-import adafruit_aw9523
+
 import adafruit_floppy
 
 i2c = board.I2C()  # uses board.SCL and board.SDA
@@ -46,7 +48,7 @@ last_filename = None
 
 def open_next_image(extension="img"):
     """Return an opened numbered file on the sdcard, such as "img01234.jpg"."""
-    global _image_counter, last_filename  # pylint: disable=global-statement
+    global _image_counter, last_filename
     try:
         os.stat("/sd")
     except OSError as exc:  # no SD card!
@@ -102,7 +104,7 @@ try:
 except Exception as e:
     print("Failed to mount SD card:")
     print(e)
-    raise SystemExit  # pylint: disable=raise-missing-from
+    raise SystemExit
 
 dev = None
 blockdata = bytearray(512)
@@ -144,7 +146,7 @@ while True:
                 print(end=".")
                 f.write(blockdata)
                 good_blocks += 1
-            except Exception as e:  # pylint: disable=broad-exception-caught
+            except Exception:
                 bad_blocks += 1
                 print(end="!")
                 f.write(baddata)

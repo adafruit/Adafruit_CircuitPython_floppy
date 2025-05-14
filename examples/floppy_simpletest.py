@@ -7,6 +7,7 @@
 # do some track-to-track seeking and flux reading.
 
 import board
+
 import adafruit_floppy
 
 D24 = getattr(board, "D24") or getattr(board, "A4")
