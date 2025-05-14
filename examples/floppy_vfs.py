@@ -10,11 +10,12 @@
 # memory fragmentation
 flux_buffer = bytearray(110000)
 
-# pylint: disable=wrong-import-position
 import os
-import storage
-import board
+
 import adafruit_datetime as datetime
+import board
+import storage
+
 import adafruit_floppy
 
 epoch = datetime.datetime(1970, 1, 1)
