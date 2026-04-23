@@ -419,11 +419,11 @@ class FloppyBlockDevice:
                 print("did not find boot signature 55 AA")
                 print(
                     "First 16 bytes in sector:",
-                    " ".join("%02x" % c for c in sector[:16]),
+                    " ".join(f"{c:02x}" for c in sector[:16]),
                 )
                 print(
                     "Final 16 bytes in sector:",
-                    " ".join("%02x" % c for c in sector[-16:]),
+                    " ".join(f"{c:02x}" for c in sector[-16:]),
                 )
                 continue
 

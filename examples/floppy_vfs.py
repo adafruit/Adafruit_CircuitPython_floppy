@@ -76,4 +76,4 @@ for i, f in enumerate(sorted(os.listdir("/floppy"))):
     print(f"{f:12} {st[ST_SIZE]:6} bytes, {d}")
 
 sv = os.statvfs("/floppy")
-print(f"{sv[SV_BFREE]*512} bytes free")
+print(f"{sv[SV_BFREE] * 512} bytes free")

@@ -54,7 +54,7 @@ def open_next_image(extension="img"):
     except OSError as exc:  # no SD card!
         raise RuntimeError("No SD card mounted") from exc
     while True:
-        filename = "/sd/dsk%04d.%s" % (_image_counter, extension)
+        filename = f"/sd/dsk{_image_counter:04d}.{extension}"
         _image_counter += 1
         try:
             os.stat(filename)
@@ -140,7 +140,7 @@ while True:
     with open_next_image() as f:
         for i in range(total_blocks):
             if i % pertrack == 0:
-                print(end=f"{i//pertrack:02d}")
+                print(end=f"{i // pertrack:02d}")
             try:
                 dev.readblocks(i, blockdata)
                 print(end=".")
@@ -158,5 +158,5 @@ while True:
     print()
     print(f"Archived {label!r} to {last_filename.split('/')[-1]}")
     print(f"{good_blocks} good + {bad_blocks} bad blocks")
-    print(f"out of {total_blocks} ({total_blocks//2}KiB)")
+    print(f"out of {total_blocks} ({total_blocks // 2}KiB)")
     print()
